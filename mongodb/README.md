@@ -27,6 +27,13 @@ Multiple databases are created in Mongo, but both the core MAS runtimes and the 
 The following MongoDB version is supported:
 - `4.2.X`
 
+# One-liner alternative
+```
+oc new-project <project-name>
+oc apply -f https://raw.githubusercontent.com/mikelo/iot-docs/master/mongodb/allinone.yaml
+```
+**This method has neither been test with MAS nor with CP4D yet**
+
 # Installing the Official MongoDB CE Operator
 
 **Important!!!! Maximo Application Suite (MAS) v8.4 does not support authentication via `SCRAM-SHA-256`. The official MongoDB CE Operator only configures `SCRAM-SHA-256` authentication. There is a [work around](#Work-Around-to-Enable-SCRAM-SHA-1-Authentication) that must be followed until MAS updates the version of the MongoDB Java driver being used. Please be sure to follow the steps for the [work around](#Work-Around-to-Enable-SCRAM-SHA-1-Authentication) after installing the MongoDB CE Operator.**
