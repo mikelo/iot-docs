@@ -27,6 +27,28 @@ Multiple databases are created in Mongo, but both the core MAS runtimes and the 
 The following MongoDB version is supported:
 - `4.2.X`
 
+# default storage class pre-requisite
+**You need an configured NFS server already running**
+```
+cd /usr/local/bin
+wget https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64 -O helm
+
+helm repo add stable https://charts.helm.sh/stable
+
+helm repo list
+NAME    URL
+stable  https://charts.helm.sh/stable
+
+oc new-project nfs-storage-provider --display-name='NFS Dynamic Storage Provider'
+oc adm policy add-scc-to-user hostmount-anyuid system:serviceaccount:nfs-storage-provider:nfsprovider-nfs-client-provisioner
+helm install nfsprovider stable/nfs-client-provisioner -n nfs-storage-provider --set nfs.server=x.x.x.x --set nfs.path=/xxx
+```
+
+to set the as the default storage class:
+```
+oc patch storageclass nfs-client -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
+```
+
 # One-liner alternative
 ```
 oc new-project <project-name>
@@ -52,50 +74,7 @@ To get started follow these steps:
 
 - Clone the repository https://github.com/mikelo/iot-docs The location to where you have cloned this repository will be referred to as $IOT_DOCS_ROOT. 
 
-<del>
-- Copy a few necessary files from the [v0.6.0 MongoDB CE Operator](https://github.com/mongodb/mongodb-kubernetes-operator/tree/v0.6.0) repository
-- Copy the contents of [config/rbac](https://github.com/mongodb/mongodb-kubernetes-operator/tree/v0.6.0/config/rbac) to `$IOT_DOCS_ROOT/mongodb/config/rbac`
-- Copy the Custom Resource Definition [mongodbcommunity.mongodb.com_mongodbcommunity.yaml](https://github.com/mongodb/mongodb-kubernetes-operator/blob/v0.6.0/config/crd/bases/mongodbcommunity.mongodb.com_mongodbcommunity.yaml) to `$IOT_DOCS_ROOT/mongodb/config/crd`
-- Copy the Deployment [manager.yaml](https://github.com/mongodb/mongodb-kubernetes-operator/blob/v0.6.0/config/manager/manager.yaml) to `$IOT_DOCS_ROOT/mongodb/config/manager`
-- Set a MongoDB password for the user named `admin`. The password should be alphanumeric and between 15 and 20 characters in length. To do this replace [UPDATE_PASSWORD](config/mas-mongo-ce/mas_v1_mongodbcommunity_openshift_cr.yaml#L52) with the desired password. The user identified by `admin` will be created during the install process.
-- The default namespace leveraged is `mongo` to change the default namespace set the environment variable `MONGO_NAMESPACE`.
-</del>
-
-
 Maximo Application Suite v8.4 supports only secure connections to MongoDB. As a convenience the script [generateSelfSignedCert.sh](certs/generateSelfSignedCert.sh) can be used to generate the required server certificate and key. Simply invoke [generateSelfSignedCert.sh](certs/generateSelfSignedCert.sh) from the `$IOT_DOCS_ROOT/mongodb/certs` directory.
-
-Once you have finished setting up the directory and file structure under `$IOT_DOCS_ROOT/mongodb` should look like:
-
-```bash
-|-- certs
-|   |-- ca.key
-|   |-- ca.pem
-|   |-- ca.srl
-|   |-- client.crt
-|   |-- client.csr
-|   |-- client.key
-|   |-- client.pem
-|   |-- generateSelfSignedCert.sh
-|   |-- mongodb.pem
-|   |-- openssl.cnf
-|   |-- server.crt
-|   |-- server.csr
-|   `-- server.key
-|-- config
-|   |-- crd
-|   |   `-- mongodbcommunity.mongodb.com_mongodbcommunity.yaml
-|   |-- manager
-|   |   `-- manager.yaml
-|   |-- mas-mongo-ce
-|   |   `-- mas_v1_mongodbcommunity_openshift_cr.yaml
-|   `-- rbac
-|       |-- kustomization.yaml
-|       |-- role.yaml
-|       |-- role_binding.yaml
-|       `-- service_account.yaml
-|-- install-mongo-ce.sh
-`-- uninstall.sh
-```
 
 To start the installation of the MongoDB CE Operator invoke the `install-mongo-ce.sh` shell script.
 
@@ -108,57 +87,6 @@ oc login .....
 
 ./install-mongo-ce.sh
 ```
-### Troubleshooting
-
-If the pods fail to come up after installing and show up in pending state for a long time, do a describe on one of the pods:
-```
-oc describe po/mas-mongo-ce-0 -n mongo
-```
-and if you see this under Events:
-```
-Events:
-  Type     Reason            Age    From               Message
-  ----     ------            ----   ----               -------
-  Warning  FailedScheduling  2m51s  default-scheduler  0/6 nodes are available: 6 pod has unbound immediate PersistentVolumeClaims.
-  Warning  FailedScheduling  2m50s  default-scheduler  0/6 nodes are available: 6 pod has unbound immediate PersistentVolumeClaims.
-```
-and if you do a describe on the one of the pvcs:
-```
-oc describe pvc/data-volume-mas-mongo-ce-0
-```
-and see an error like this under Events:
-```
-FailedBinding 85s (x26 over 7m39s) persistentvolume-controller no persistent volumes available for this claim and no storage class is set
-```
-then your cluster probably does not have a default storageclass configured.  To fix that, check for storageclasses:
-```
-oc get storageclass
-NAME                          PROVISIONER                             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-localblock                    kubernetes.io/no-provisioner            Delete          WaitForFirstConsumer   false                  3d1h
-ocs-storagecluster-ceph-rbd   openshift-storage.rbd.csi.ceph.com      Delete          Immediate              true                   3d1h
-ocs-storagecluster-ceph-rgw   openshift-storage.ceph.rook.io/bucket   Delete          Immediate              false                  3d1h
-ocs-storagecluster-cephfs     openshift-storage.cephfs.csi.ceph.com   Delete          Immediate              true                   3d1h
-openshift-storage.noobaa.io   openshift-storage.noobaa.io/obc         Delete          Immediate              false                  3d1h
-```
-When the a default storageclass is set, you will see this:
-```
-oc get storageclass                                                                                                                          
-NAME                                    PROVISIONER                             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-localblock                              kubernetes.io/no-provisioner            Delete          WaitForFirstConsumer   false                  3d1h
-ocs-storagecluster-ceph-rbd (default)   openshift-storage.rbd.csi.ceph.com      Delete          Immediate              true                   3d1h
-ocs-storagecluster-ceph-rgw             openshift-storage.ceph.rook.io/bucket   Delete          Immediate              false                  3d1h
-ocs-storagecluster-cephfs               openshift-storage.cephfs.csi.ceph.com   Delete          Immediate              true                   3d1h
-openshift-storage.noobaa.io             openshift-storage.noobaa.io/obc         Delete          Immediate              false                  3d1h
-```
-To set a default storageclass, do:
-```
-oc patch storageclass <storage_class> -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
-```
-For example:
-```
-oc patch storageclass ocs-storagecluster-ceph-rbd -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
-```
-and uninstall the mongo-ce-operator, and reinstall.
 
 ### Validate Installation
 
