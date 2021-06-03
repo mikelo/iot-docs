@@ -28,7 +28,7 @@ The following MongoDB version is supported:
 - `4.2.X`
 
 # default storage class pre-requisite
-**You need an configured NFS server already running**
+**You need a configured NFS server already running**
 ```
 cd /usr/local/bin
 wget https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64 -O helm
