@@ -47,18 +47,18 @@ function showWorking {
 
 function waitForTheDeployment {
   echo -n " - Waiting for MongoDB CE Operator  "
-  while [[ $(oc get deployment mongodb-kubernetes-operator -n ${MONGO_NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Available")].status}') != "True" ]];do sleep 5s; done &
+  while [[ $(oc get deployment mongodb-kubernetes-operator -n ${MONGO_NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Available")].status}') != "True" ]];do; sleep 5s; done
   showWorking $!
 }
 
 function waitForTheStatefulSet {
   echo -n " - Waiting for MongoDB CE Stateful Set to initialize and start  "
-  while [[ $(oc get statefulset mas-mongo-ce -n ${MONGO_NAMESPACE} -o 'jsonpath={..status.readyReplicas}') != "3" ]];do sleep 5s; done &
+  while [[ $(oc get statefulset mas-mongo-ce -n ${MONGO_NAMESPACE} -o 'jsonpath={..status.readyReplicas}') != "3" ]];do sleep 5s; done
   showWorking $!
 }
 
 
-oc new-project mongo
+oc new-project ${MONGO_NAMESPACE}
 
 oc apply -f config/crd/mongodbcommunity.mongodb.com_mongodbcommunity.yaml -n ${MONGO_NAMESPACE} 
 
