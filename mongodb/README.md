@@ -50,7 +50,7 @@ Installation of the MongoDB CE operator using this repository has been tested wi
 
 To get started follow these steps:
 
-- Clone the repository https://github.com/ibm-watson-iot/iot-docs The location to where you have cloned this repository will be referred to as $IOT_DOCS_ROOT. 
+- Clone the repository https://github.com/mikelo/iot-docs The location to where you have cloned this repository will be referred to as $IOT_DOCS_ROOT. 
 
 <del>
 - Copy a few necessary files from the [v0.6.0 MongoDB CE Operator](https://github.com/mongodb/mongodb-kubernetes-operator/tree/v0.6.0) repository
