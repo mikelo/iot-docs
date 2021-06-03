@@ -17,6 +17,11 @@ if [ -z "$MONGO_NAMESPACE" ]; then
   MONGO_NAMESPACE="mongo"
 fi
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+cd $SCRIPT_DIR/certs
+./generateSelfSignedCert.sh
+cd ..
 
 command -v oc >/dev/null 2>&1 || { echo >&2 "Required executable \"oc\" not found on PATH.  Aborting."; exit 1; }
 
@@ -47,14 +52,17 @@ function showWorking {
 
 function waitForTheDeployment {
   echo -n " - Waiting for MongoDB CE Operator  "
-  while [[ $(oc get deployment mongodb-kubernetes-operator -n ${MONGO_NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Available")].status}') != "True" ]];do; sleep 5s; done
-  showWorking $!
+  while [[ $(oc get deployment mongodb-kubernetes-operator -n ${MONGO_NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Available")].status}') != "True" ]]
+  do sleep 5s; done &
+  echo -n " - MongoDB CE Operator DONE "
+  # showWorking $!
 }
 
 function waitForTheStatefulSet {
-  echo -n " - Waiting for MongoDB CE Stateful Set to initialize and start  "
-  while [[ $(oc get statefulset mas-mongo-ce -n ${MONGO_NAMESPACE} -o 'jsonpath={..status.readyReplicas}') != "3" ]];do sleep 5s; done
-  showWorking $!
+  echo "Waiting for MongoDB CE Stateful Set to initialize and start  "
+  while [[ $(oc get statefulset mas-mongo-ce -n ${MONGO_NAMESPACE} -o 'jsonpath={..status.readyReplicas}') != "3" ]]; do sleep 5s; done
+  echo "MongoDB CE Stateful Set STARTED  "
+  # showWorking $!
 }
 
 
