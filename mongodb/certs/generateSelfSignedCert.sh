@@ -1,5 +1,5 @@
 #!/bin/bash
-
+rm ca.key ca.pem ca.srl client.crt client.csr client.key client.pem mongodb.pem server.crt server.csr server.key
 # Generate self signed root CA cert
 openssl req -config openssl.cnf -days 3650 -nodes -x509 -newkey rsa:2048 -subj "/C=US/ST=NY/L=New York/O=Example, LLC/CN=Mongo CA" -extensions v3_ca -keyout ca.key -out ca.pem
 

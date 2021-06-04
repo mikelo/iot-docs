@@ -20,6 +20,7 @@ fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 cd $SCRIPT_DIR/certs
+sed "s/MONGO_NAMESPACE/$MONGO_NAMESPACE/g" openssl.cnf.orig > openssl.cnf 
 ./generateSelfSignedCert.sh
 cd ..
 
@@ -51,10 +52,10 @@ function showWorking {
 
 
 function waitForTheDeployment {
-  echo -n " - Waiting for MongoDB CE Operator  "
+  echo "Waiting for MongoDB CE Operator"
   while [[ $(oc get deployment mongodb-kubernetes-operator -n ${MONGO_NAMESPACE} -o 'jsonpath={..status.conditions[?(@.type=="Available")].status}') != "True" ]]
   do sleep 5s; done &
-  echo -n " - MongoDB CE Operator DONE "
+  echo "MongoDB CE Operator DONE "
   # showWorking $!
 }
 
