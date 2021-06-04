@@ -1,0 +1,3 @@
+mongodb/certs/*
+!mongodb/certs/openssl.cnf.orig
+!mongodb/certs/generateSelfSignedCert.sh
